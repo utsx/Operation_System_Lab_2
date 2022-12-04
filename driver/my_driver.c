@@ -58,7 +58,6 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
         return len;
         }
     switch (struct_id) {
-        default:
         case STRUCT_PCI_DEV:
             printk(KERN_INFO "lab_driver: PCI_DEV");
             len = write_pci_dev(task, buf, count, ppos);
@@ -157,7 +156,7 @@ static int write_inode(struct task_struct *task, char __user *buf, size_t count,
 static int __init lab_driver_init(void)
 {
     printk(KERN_INFO "lab_driver: init()\r");
-    proc_root = proc_create("driver", 0666, NULL, &fops);
+    proc_root = proc_create("lab_driver", 0666, NULL, &fops);
     if(proc_root == NULL){
         proc_remove(proc_root);
         printk(KERN_INFO "lab_driver: init() - proc_create() failed\r");
