@@ -56,14 +56,12 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
             return -EFAULT;
         *ppos = len;
         return len;
-        }
+    }
     switch (struct_id) {
         case STRUCT_PCI_DEV:
-            printk(KERN_INFO "lab_driver: PCI_DEV");
             len = write_pci_dev(task, buf, count, ppos);
             break;
         case STRUCT_INODE:
-            printk(KERN_INFO "lab_driver: INODE");
             len = write_inode(task, buf, count, ppos);
             break;
     }
