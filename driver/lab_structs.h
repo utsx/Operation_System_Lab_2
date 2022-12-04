@@ -20,7 +20,7 @@ struct user_pci_dev{
 struct user_inode{
     unsigned int i_flags;
     unsigned short i_bytes;
-
+    unsigned short i_mode;
 };
 
 #define OPERATION_SYSTEM_LAB_2_LAB_STRUCTS_H
