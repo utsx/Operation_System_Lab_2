@@ -157,7 +157,7 @@ static int write_inode(struct task_struct *task, char __user *buf, size_t count,
 static int __init lab_driver_init(void)
 {
     printk(KERN_INFO "lab_driver: init()\r");
-    proc_root = proc_create("lab_driver", 0644, NULL, &fops);
+    proc_root = proc_create("driver", 0666, NULL, &fops);
     if(proc_root == NULL){
         proc_remove(proc_root);
         printk(KERN_INFO "lab_driver: init() - proc_create() failed\r");
