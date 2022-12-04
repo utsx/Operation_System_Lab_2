@@ -48,12 +48,16 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
 {
     int len = 0;
     struct task_struct *task = get_pid_task(find_vpid(pid), PIDTYPE_PID);
-    if(*ppos > 0 || count < procfs_buffer_size)
-        return 0;
+    if(*ppos > 0 || count < procfs_buffer_size){
+        printk(KERN_INFO "lab_driver: read error");
+        return -EFAULT;
+    }
     if(task == NULL){
         len += sprintf(procfs_buffer,"No such process with pid = %d\n", pid);
-        if(copy_to_user(buf, procfs_buffer, len))
+        if(copy_to_user(buf, procfs_buffer, len)){
+            printk(KERN_INFO "lab_driver: read error");
             return -EFAULT;
+        }
         *ppos = len;
         return len;
     }
@@ -74,12 +78,17 @@ static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_
 {
     int num_of_args, a, b, c;
     procfs_buffer_size = count;
-    if(*ppos > 0 || count > PROCFS_MAX_SIZE)
+    if(*ppos > 0 || count > PROCFS_MAX_SIZE){
+        printk(KERN_INFO "lab_driver: write error\n");
         return -EFAULT;
-    if(copy_from_user(procfs_buffer, buf, count))
+    }
+    if(copy_from_user(procfs_buffer, buf, count)){
+        printk(KERN_INFO "Error while copying from user");
         return -EFAULT;
+    }
     num_of_args = sscanf(procfs_buffer, "%d %d", &a, &b);
     if(num_of_args != 2){
+        printk(KERN_INFO "Wrong number of arguments\n");
         return -EFAULT;
     }
     struct_id = a;
