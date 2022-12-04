@@ -34,6 +34,9 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
 static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos);
 static struct user_pci_dev get_pci_dev(void);
 static int write_pci_dev(struct task_struct *task, char __user *buf, size_t count, loff_t *ppos);
+static struct user_inode my_get_inode_by_pid(void);
+static int write_inode(struct task_struct *task, char __user *buf, size_t count, loff_t *ppos);
+
 
 static struct file_operations fops = {
     .owner = THIS_MODULE,
@@ -70,11 +73,13 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
         }
         if(struct_id == STRUCT_INODE){
             printk(KERN_INFO "lab_driver: read() - struct_id == STRUCT_INODE\r");
-            return write_pci_dev(task, buf, count, ppos);
+            return write_inode(task, buf, count, ppos);
         }
         }
         return -EFAULT;
 }
+
+
 
 
 static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
@@ -136,11 +141,33 @@ static int write_pci_dev(struct task_struct *task, char __user *buf, size_t coun
 
 //inode functions
 
-
+static struct user_inode my_get_inode_by_pid(){
+    struct task_struct *task = get_pid_task(find_get_pid(pid), PIDTYPE_PID);
+    struct mm_struct *mm = task->mm;
+    struct vm_area_struct *vma = mm->mmap;
+    struct inode *inode = vma->vm_file->f_inode;
+    struct user_inode user_inode = (struct user_inode){
+        .i_bytes = inode->i_bytes,
+        .i_flags = inode->i_flags,
+    };
+    return user_inode;
+}
 
 //write user_inode struct to user
 
-
+static int write_inode(struct task_struct *task, char __user *buf, size_t count, loff_t *ppos){
+    struct user_inode user_inode = my_get_inode_by_pid();
+    printk(KERN_INFO "lab_driver: read() - i_bytes: %d\r", user_inode.i_bytes);
+    size_t len = 0;
+    len += sprintf(procfs_buffer + len, "i_bytes: %d\n", user_inode.i_bytes);
+    len += sprintf(procfs_buffer + len, "i_flags: %d\n", user_inode.i_flags);
+    if (*ppos >= len || copy_to_user(buf, procfs_buffer, len)){
+        printk(KERN_INFO "lab_driver: read() - copy_to_user() failed\r");
+        return -EFAULT;
+    }
+    *ppos += len;
+    return len;
+}
 
 //module init and exit functions
 
