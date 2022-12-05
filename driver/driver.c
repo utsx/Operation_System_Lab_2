@@ -47,7 +47,6 @@ static const struct proc_ops proc_ops = {
 
 static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
-    int len = 0;
     struct task_struct *task = get_pid_task(find_vpid(pid), PIDTYPE_PID);
     if(task == NULL){
         printk(KERN_INFO "lab_driver: task is null");
@@ -64,6 +63,7 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
                 .subsystem_vendor = dev->subsystem_vendor,
             };
             if(copy_to_user(buf, &user_pci_dev, sizeof(struct user_pci_dev))){
+                printk(KERN_INFO "lab_driver: PCI_DEV copy_to_user failed");
                 return -EFAULT;
             }
             break;
@@ -77,7 +77,7 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
                 .i_mode = inode->i_mode
             };
             if(copy_to_user(buf, &user_inode, sizeof(struct user_inode))){
-                printk(KERN_INFO "lab_driver: write inode error");
+                printk(KERN_INFO "lab_driver: INODE copy_to_user failed");
                 return -EFAULT;
             }
             break;
@@ -95,16 +95,16 @@ static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_
         return -EFAULT;
     }
     if(copy_from_user(procfs_buffer, buf, count)){
-        pr_info("copy_from_user error");
+        printk(KERN_INFO "lab_driver: copy from user error");
         return -EFAULT;
     }
     num_of_args = sscanf(procfs_buffer, "%d %d", &a, &b);
     if(num_of_args != 2){
-        pr_info(KERN_INFO "Wrong number of arguments\n");
+        printk(KERN_INFO "lab_driver: sscanf error");
         return -EFAULT;
     }
     if(a != STRUCT_PCI_DEV && a != STRUCT_INODE){
-        pr_info(KERN_INFO "Wrong struct id\n");
+        printk(KERN_INFO "lab_driver: wrong struct id");
         return -EFAULT;
     }
     struct_id = a;
@@ -122,17 +122,17 @@ static int __init lab_driver_init(void)
     proc_root = proc_create(PROCFS_NAME, 0666, NULL, &proc_ops);
     if(proc_root == NULL){
         proc_remove(proc_root);
-        pr_alert("Error: Could not initialize /proc/%s\n", PROCFS_NAME);
+        printk(KERN_ALERT "lab_driver: Could not initialize /proc/%s", PROCFS_NAME);
         return -ENOMEM;
     }
-    pr_info("/proc/%s created", PROCFS_NAME);
+    printk(KERN_INFO "lab_driver: module loaded\n");
     return SUCCESS;
 }
 
 static void __exit lab_driver_exit(void)
 {
     proc_remove(proc_root);
-    pr_info("/proc/%s removed", PROCFS_NAME);
+    printk(KERN_INFO "lab_driver: module unloaded\n");
 }
 
 module_init(lab_driver_init);

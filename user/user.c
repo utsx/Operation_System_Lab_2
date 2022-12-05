@@ -9,11 +9,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include "user.h"
 
+
+void help(){
+    fprintf(stderr, "Usage: ./user <struct_id> <pid>\n0 - pci_dev, 1 - inode\nprocess id\n");
+}
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf("Usage: ./user <struct_id> <pid>\n struct_id - 0 - pci_dev, 1 - inode\n pid - process id", argv[0]);
+        help();
     }
     if(argc < 3){
         fprintf(stderr, "Not enough arguments\n");
@@ -27,12 +32,14 @@ int main(int argc, char *argv[]) {
     errno = 0;
     int struct_id = strtol(argv[1], &endptr, 10);
     if(errno != 0 || *endptr != '\0'){
+        help();
         perror("Invalid struct_id");
         return -1;
     }
     errno = 0;
     int pid = strtol(argv[2], &endptr, 10);
     if(errno != 0 || *endptr != '\0'){
+        help();
         perror("PID in a wrong format");
         return -1;
     }
