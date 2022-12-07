@@ -32,13 +32,6 @@ static unsigned long procfs_buffer_size = 0;
 static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count, loff_t *ppos);
 static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos);
 
-//service functions
-
-static struct user_pci_dev get_pci_dev(void);
-static int write_pci_dev(struct task_struct *task, char __user *buf, size_t count, loff_t *ppos);
-static int write_inode(struct task_struct *task, char __user *buf, size_t count, loff_t *ppos);
-
-
 static const struct proc_ops proc_ops = {
     .proc_read = lab_driver_read,
     .proc_write = lab_driver_write
