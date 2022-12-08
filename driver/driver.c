@@ -8,7 +8,7 @@
 #include <linux/init.h>
 #include <asm/uaccess.h>
 #include <linux/version.h>
-#include "driver_structs.h"
+#include "../driver_structs.h"
 #include <linux/ptrace.h>
 
 
@@ -58,7 +58,6 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
             .inode = {
                     .i_ino = inode->i_ino,
                     .i_mode = inode->i_mode,
-                    .i_nlink = inode->i_nlink,
                     .i_flags = inode->i_flags,
                     .i_size = inode->i_size,
                     .i_blocks = inode->i_blocks

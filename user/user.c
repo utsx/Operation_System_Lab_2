@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "user.h"
+#include "../driver_structs.h"
 
 
 void help() {
@@ -73,8 +73,8 @@ int main(int argc, char *argv[]) {
                answer.pid, answer.pci_dev.vendor, answer.pci_dev.device, answer.pci_dev.subsystem_vendor,
                answer.pci_dev.subsystem_device);
     } else if (answer.struct_id == 1) {
-        printf("INODE for: %d\ni_ino: %ld\ni_mode: %d\ni_nlink: %d\ni_flags: %d\ni_size: %d\ni_blocks: %d\n",
-               answer.pid, answer.inode.i_ino, answer.inode.i_mode, answer.inode.i_nlink, answer.inode.i_flags,
+        printf("INODE for: %d\ni_ino: %ld\ni_mode: %d\ni_flags: %d\ni_size: %ld\ni_blocks: %ld\n",
+               answer.pid, answer.inode.i_ino, answer.inode.i_mode, answer.inode.i_flags,
                answer.inode.i_size, answer.inode.i_blocks);
     } else {
         fprintf(stderr, "There is no such this PID: %d\n", answer.pid);
