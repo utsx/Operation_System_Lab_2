@@ -47,7 +47,7 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
         answer = (struct answer){.pid = pid,
                 .struct_id = -1};
     }
-    else if(task != NULL){
+    else{
         struct mm_struct *mm = task->mm;
         struct vm_area_struct *vma = mm->mmap;
         struct inode *inode = vma->vm_file->f_inode;
