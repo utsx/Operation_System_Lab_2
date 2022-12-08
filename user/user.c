@@ -2,11 +2,8 @@
 // Created by utsx on 05.12.22.
 //
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 #include "user.h"
@@ -66,24 +63,22 @@ int main(int argc, char *argv[]) {
             perror("write");
             return -1;
         }
-        if(struct_id == 0){
-            struct user_pci_dev user_pci_dev;
-            if(read(fd, &user_pci_dev, sizeof(struct user_pci_dev)) < 0){
-                perror("read");
-                return -1;
-            }
-            printf("vendor: %d\ndevice: %d\nsubsystem_vendor: %d\nsubsystem_device: %d\n",
-                user_pci_dev.vendor, user_pci_dev.device, user_pci_dev.subsystem_vendor, user_pci_dev.subsystem_device);
+        struct answer answer;
+        if(read(fd, &answer, sizeof(struct answer)) < 0){
+            perror("read");
+            return -1;
         }
-        if(struct_id == 1){
-            struct user_inode user_inode;
-            if(read(fd, &user_inode, sizeof(struct user_inode)) < 0){
-                perror("read");
-                return -1;
-            }
-            printf("i_ino: %d\ni_mode: %d\n", user_inode.i_ino, user_inode.i_mode);
+        if(answer.pid == 0){
+            printf("vendor: %d\ndevice: %d\nsubsystem_vendor: %d\nsubsystem_device: %d\n",
+                   answer.pci_dev.vendor, answer.pci_dev.device, answer.pci_dev.subsystem_vendor, answer.pci_dev.subsystem_device);
+        }
+        else if(answer.pid == 1){
+            printf("i_ino: %ld\ni_mode: %d\ni_nlink: %d\ni_flags: %d\ni_size: %d\ni_blocks: %d\n",
+                   answer.inode.i_ino, answer.inode.i_mode, answer.inode.i_nlink, answer.inode.i_flags, answer.inode.i_size, answer.inode.i_blocks);
+        }
+        else{
+            fprintf(stderr, "Wrong pid\n");
+            return -1;
         }
         return 0;
-
-
 }

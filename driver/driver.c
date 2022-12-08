@@ -18,14 +18,14 @@ MODULE_AUTHOR("Dmitrii Aleksandrov");
 static int pid = 0;
 static int struct_id = 0;
 
+static char procfs_buffer[PROCFS_MAX_SIZE];
+
+static unsigned long procfs_buffer_size = 0;
+
 static struct proc_dir_entry *proc_root;
 
 static int __init lab_driver_init(void);
 static void __exit lab_driver_exit(void);
-
-static char procfs_buffer[PROCFS_MAX_SIZE];
-
-static unsigned long procfs_buffer_size = 0;
 
 //module parameters
 
@@ -40,40 +40,38 @@ static const struct proc_ops proc_ops = {
 
 static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
+    struct answer answer;
     struct task_struct *task = get_pid_task(find_vpid(pid), PIDTYPE_PID);
     if(task == NULL){
         printk(KERN_INFO "lab_driver: task is null");
-        return -EFAULT;
+        answer = (struct answer){.pid = -1};
     }
-    switch (struct_id) {
-        case STRUCT_PCI_DEV:
-            struct pci_dev *dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
-            struct user_pci_dev user_pci_dev;
-            user_pci_dev = (struct user_pci_dev){
-                .device = dev->device,
-                .vendor = dev->vendor,
-                .subsystem_device = dev->subsystem_device,
-                .subsystem_vendor = dev->subsystem_vendor,
-            };
-            if(copy_to_user(buf, &user_pci_dev, sizeof(struct user_pci_dev))){
-                printk(KERN_INFO "lab_driver: PCI_DEV copy_to_user failed");
-                return -EFAULT;
+    else{
+        struct mm_struct *mm = task->mm;
+        struct vm_area_struct *vma = mm->mmap;
+        struct inode *inode = vma->vm_file->f_inode;
+        struct pci_dev *dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
+        answer = (struct answer) {
+            .pid = struct_id,
+            .inode = {
+                    .i_ino = inode->i_ino,
+                    .i_mode = inode->i_mode,
+                    .i_nlink = inode->i_nlink,
+                    .i_flags = inode->i_flags,
+                    .i_size = inode->i_size,
+                    .i_blocks = inode->i_blocks
+                            },
+            .pci_dev = {
+                    .vendor = dev->vendor,
+                    .device = dev->device,
+                    .subsystem_vendor = dev->subsystem_vendor,
+                    .subsystem_device = dev->subsystem_device
             }
-            break;
-        case STRUCT_INODE:
-            printk(KERN_INFO "lab_driver: write inode");
-            struct mm_struct *mm = task->mm;
-            struct vm_area_struct *vma = mm->mmap;
-            struct inode *inode = vma->vm_file->f_inode;
-            struct user_inode user_inode = (struct user_inode){
-                .i_ino = inode->i_ino,
-                .i_mode = inode->i_mode
-            };
-            if(copy_to_user(buf, &user_inode, sizeof(struct user_inode))){
-                printk(KERN_INFO "lab_driver: INODE copy_to_user failed");
-                return -EFAULT;
-            }
-            break;
+        };
+    }
+    if(copy_to_user(buf, &answer, sizeof(struct answer)) != 0){
+        printk(KERN_INFO "lab_driver: copy_to_user failed");
+        return -1;
     }
     return SUCCESS;
 }
@@ -81,29 +79,30 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
 
 static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
-    int num_of_args, a, b, c;
+    int num_of_args, read_struct_id, read_pid, c;
     procfs_buffer_size = count;
     if(*ppos > 0 || count > PROCFS_MAX_SIZE){
-        pr_info("lab_driver: write error");
+        printk(KERN_INFO "lab_driver: write failed");
         return -EFAULT;
     }
-    if(copy_from_user(procfs_buffer, buf, count)){
-        printk(KERN_INFO "lab_driver: copy from user error");
+    if(copy_from_user(procfs_buffer, buf, count) != 0){
+        printk(KERN_INFO "lab_driver: copy_from_user failed");
         return -EFAULT;
     }
-    num_of_args = sscanf(procfs_buffer, "%d %d", &a, &b);
+    num_of_args = sscanf(buf, "%d %d", &read_struct_id, &read_pid);
     if(num_of_args != 2){
-        printk(KERN_INFO "lab_driver: sscanf error");
-        return -EFAULT;
+        printk(KERN_INFO "lab_driver: wrong number of arguments");
+        return -1;
     }
-    if(a != STRUCT_PCI_DEV && a != STRUCT_INODE){
+    if(read_struct_id != STRUCT_PCI_DEV && read_struct_id != STRUCT_INODE){
         printk(KERN_INFO "lab_driver: wrong struct id");
-        return -EFAULT;
+        return -1;
     }
-    struct_id = a;
-    pid = b;
+    pid = read_pid;
+    struct_id = read_struct_id;
     c = strlen(procfs_buffer);
     *ppos = c;
+    printk(KERN_INFO "lab_driver: pid = %d, struct_id = %d", pid, struct_id);
     return c;
 }
 
