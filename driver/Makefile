@@ -1,4 +1,3 @@
-
 MODULE_NAME = driver
 
 obj-m += driver.o
