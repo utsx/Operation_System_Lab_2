@@ -44,15 +44,17 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
     struct task_struct *task = get_pid_task(find_vpid(pid), PIDTYPE_PID);
     if(task == NULL){
         printk(KERN_INFO "lab_driver: task is null");
-        answer = (struct answer){.pid = -1};
+        answer = (struct answer){.pid = pid,
+                .struct_id = -1};
     }
-    else{
+    else if(task != NULL){
         struct mm_struct *mm = task->mm;
         struct vm_area_struct *vma = mm->mmap;
         struct inode *inode = vma->vm_file->f_inode;
         struct pci_dev *dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
         answer = (struct answer) {
-            .pid = struct_id,
+            .pid = pid,
+            .struct_id = struct_id,
             .inode = {
                     .i_ino = inode->i_ino,
                     .i_mode = inode->i_mode,
