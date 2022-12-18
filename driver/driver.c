@@ -49,17 +49,16 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
     }
     else{
         struct mm_struct *mm = task->mm;
-        if(mm == NULL){
-            printk(KERN_INFO "lab_driver: mm is null");
-            return -EFAULT;
+        struct vm_area_struct *vma;
+        struct inode *inode;
+        struct pci_dev *dev;
+        if(mm != NULL){
+            vma = mm->mmap;
         }
-        struct vm_area_struct *vma = mm->mmap;
-        if(vma == NULL){
-            printk(KERN_INFO "lab_driver: vma is null");
-            return -EFAULT;
+        if(vma != NULL){
+            inode = vma->vm_file->f_inode;
         }
-        struct inode *inode = vma->vm_file->f_inode;
-        struct pci_dev *dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
+       dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
         if(inode == NULL){
             printk(KERN_INFO "lab_driver: inode is null");
             answer = (struct answer){.pid = pid,
