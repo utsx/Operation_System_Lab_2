@@ -1,6 +1,3 @@
-//
-// Created by utsx on 05.12.22.
-//
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>

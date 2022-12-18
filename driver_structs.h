@@ -30,10 +30,8 @@ struct user_inode{
 struct answer{
     int pid;
     int struct_id;
-    union{
-        struct user_pci_dev pci_dev;
-        struct user_inode inode;
-    };
+    struct user_inode inode;
+    struct user_pci_dev pci_dev;
 };
 
 #define OPERATION_SYSTEM_LAB_2_LAB_STRUCTS_H

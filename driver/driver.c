@@ -52,23 +52,41 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
         struct vm_area_struct *vma = mm->mmap;
         struct inode *inode = vma->vm_file->f_inode;
         struct pci_dev *dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
-        answer = (struct answer) {
-            .pid = pid,
-            .struct_id = struct_id,
-            .inode = {
-                    .i_ino = inode->i_ino,
-                    .i_mode = inode->i_mode,
-                    .i_flags = inode->i_flags,
-                    .i_size = inode->i_size,
-                    .i_blocks = inode->i_blocks
-                            },
-            .pci_dev = {
-                    .vendor = dev->vendor,
-                    .device = dev->device,
-                    .subsystem_vendor = dev->subsystem_vendor,
-                    .subsystem_device = dev->subsystem_device
+        if(inode == NULL){
+            printk(KERN_INFO "lab_driver: inode is null");
+            answer = (struct answer){.pid = pid,
+                    .struct_id = -1};
+        }
+        else if(dev == NULL){
+            printk(KERN_INFO "lab_driver: pci_dev is null");
+            answer = (struct answer){.pid = pid,
+                    .struct_id = -1};
+        }
+        else{
+            if(struct_id == STRUCT_INODE){
+                printk(KERN_INFO "lab_driver: inode is not null");
+                answer = (struct answer){.pid = pid,
+                        .struct_id = STRUCT_INODE,
+                        .inode = (struct user_inode){.i_ino = inode->i_ino,
+                                .i_mode = inode->i_mode,
+                                .i_flags = inode->i_flags,
+                                .i_size = inode->i_size,
+                                .i_blocks = inode->i_blocks}};
             }
-        };
+            else if(struct_id == STRUCT_PCI_DEV){
+                printk(KERN_INFO "lab_driver: pci_dev is not null");
+                answer = (struct answer){.pid = pid,
+                        .struct_id = STRUCT_PCI_DEV,
+                        .pci_dev = (struct user_pci_dev){.vendor = dev->vendor,
+                                .device = dev->device,
+                                .subsystem_vendor = dev->subsystem_vendor,
+                                .subsystem_device = dev->subsystem_device}};
+            }
+            else{
+                answer = (struct answer){.pid = pid,
+                        .struct_id = -1};
+            }
+        }
     }
     if(copy_to_user(buf, &answer, sizeof(struct answer)) != 0){
         printk(KERN_INFO "lab_driver: copy_to_user failed");
