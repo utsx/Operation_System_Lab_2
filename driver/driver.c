@@ -16,7 +16,6 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dmitrii Aleksandrov");
 
 static int pid = 0;
-static int struct_id = 0;
 
 static char procfs_buffer[PROCFS_MAX_SIZE];
 
@@ -44,55 +43,57 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
     struct task_struct *task = get_pid_task(find_vpid(pid), PIDTYPE_PID);
     if(task == NULL){
         printk(KERN_INFO "lab_driver: task is null");
-        answer = (struct answer){.pid = pid,
-                .struct_id = -1};
+        answer = (struct answer){
+            .pid = -1};
     }
     else{
+        int check = 0;
         struct mm_struct *mm = task->mm;
         struct vm_area_struct *vma;
         struct inode *inode;
         struct pci_dev *dev;
-        if(mm != NULL){
+        if(mm == NULL){
+            check = 1;
+        }
+        else{
             vma = mm->mmap;
         }
-        if(vma != NULL){
+        if(vma == NULL){
+            check = 1;
+        }
+        else{
             inode = vma->vm_file->f_inode;
         }
-       dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
-        if(inode == NULL){
+        dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
+        if(check == 1)
+        {
+        printk(KERN_INFO "lab_driver: inode is null");
+        answer = (struct answer){
+                .pid = -1};
+        }
+        else if(inode == NULL){
             printk(KERN_INFO "lab_driver: inode is null");
-            answer = (struct answer){.pid = pid,
-                    .struct_id = -1};
+            answer = (struct answer){
+                    .pid = -1};
         }
         else if(dev == NULL){
             printk(KERN_INFO "lab_driver: pci_dev is null");
-            answer = (struct answer){.pid = pid,
-                    .struct_id = -1};
+            answer = (struct answer){
+                .pid = -1};
         }
         else{
-            if(struct_id == 1){
-                printk(KERN_INFO "lab_driver: inode is not null");
-                answer = (struct answer){.pid = pid,
-                        .struct_id = 1,
-                        .inode = (struct user_inode){.i_ino = inode->i_ino,
-                                .i_mode = inode->i_mode,
-                                .i_flags = inode->i_flags,
-                                .i_size = inode->i_size,
-                                .i_blocks = inode->i_blocks}};
-            }
-            else if(struct_id == 0){
-                printk(KERN_INFO "lab_driver: pci_dev is not null");
-                answer = (struct answer){.pid = pid,
-                        .struct_id = 0,
+                answer = (struct answer){
+                        .pid = pid,
                         .pci_dev = (struct user_pci_dev){.vendor = dev->vendor,
                                 .device = dev->device,
                                 .subsystem_vendor = dev->subsystem_vendor,
-                                .subsystem_device = dev->subsystem_device}};
-            }
-            else{
-                answer = (struct answer){.pid = pid,
-                        .struct_id = -1};
-            }
+                                .subsystem_device = dev->subsystem_device},
+                        .inode = (struct user_inode){.i_ino = inode->i_ino,
+                            .i_mode = inode->i_mode,
+                            .i_flags = inode->i_flags,
+                            .i_size = inode->i_size,
+                            .i_blocks = inode->i_blocks}
+                };
         }
     }
     if(copy_to_user(buf, &answer, sizeof(struct answer)) != 0){
@@ -105,7 +106,7 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
 
 static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
-    int num_of_args, read_struct_id, read_pid, c;
+    int num_of_args, read_pid, c;
     procfs_buffer_size = count;
     if(*ppos > 0 || count > PROCFS_MAX_SIZE){
         printk(KERN_INFO "lab_driver: write failed");
@@ -115,20 +116,15 @@ static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_
         printk(KERN_INFO "lab_driver: copy_from_user failed");
         return -EFAULT;
     }
-    num_of_args = sscanf(buf, "%d %d", &read_struct_id, &read_pid);
-    if(num_of_args != 2){
+    num_of_args = sscanf(buf, "%d", &read_pid);
+    if(num_of_args != 1){
         printk(KERN_INFO "lab_driver: wrong number of arguments");
         return -1;
     }
-    if(read_struct_id != 0 && read_struct_id != 1){
-        printk(KERN_INFO "lab_driver: wrong struct id");
-        return -1;
-    }
     pid = read_pid;
-    struct_id = read_struct_id;
     c = strlen(procfs_buffer);
     *ppos = c;
-    printk(KERN_INFO "lab_driver: pid = %d, struct_id = %d", pid, struct_id);
+    printk(KERN_INFO "lab_driver: pid = %d", pid);
     return c;
 }
 

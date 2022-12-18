@@ -27,7 +27,6 @@ struct user_inode{
 
 struct answer{
     int pid;
-    int struct_id;
     struct user_inode inode;
     struct user_pci_dev pci_dev;
 };
