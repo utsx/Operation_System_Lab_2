@@ -49,7 +49,15 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
     }
     else{
         struct mm_struct *mm = task->mm;
+        if(mm == NULL){
+            printk(KERN_INFO "lab_driver: mm is null");
+            return -EFAULT;
+        }
         struct vm_area_struct *vma = mm->mmap;
+        if(vma == NULL){
+            printk(KERN_INFO "lab_driver: vma is null");
+            return -EFAULT;
+        }
         struct inode *inode = vma->vm_file->f_inode;
         struct pci_dev *dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
         if(inode == NULL){
@@ -63,20 +71,20 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
                     .struct_id = -1};
         }
         else{
-            if(struct_id == STRUCT_INODE){
+            if(struct_id == 1){
                 printk(KERN_INFO "lab_driver: inode is not null");
                 answer = (struct answer){.pid = pid,
-                        .struct_id = STRUCT_INODE,
+                        .struct_id = 1,
                         .inode = (struct user_inode){.i_ino = inode->i_ino,
                                 .i_mode = inode->i_mode,
                                 .i_flags = inode->i_flags,
                                 .i_size = inode->i_size,
                                 .i_blocks = inode->i_blocks}};
             }
-            else if(struct_id == STRUCT_PCI_DEV){
+            else if(struct_id == 0){
                 printk(KERN_INFO "lab_driver: pci_dev is not null");
                 answer = (struct answer){.pid = pid,
-                        .struct_id = STRUCT_PCI_DEV,
+                        .struct_id = 0,
                         .pci_dev = (struct user_pci_dev){.vendor = dev->vendor,
                                 .device = dev->device,
                                 .subsystem_vendor = dev->subsystem_vendor,
@@ -113,7 +121,7 @@ static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_
         printk(KERN_INFO "lab_driver: wrong number of arguments");
         return -1;
     }
-    if(read_struct_id != STRUCT_PCI_DEV && read_struct_id != STRUCT_INODE){
+    if(read_struct_id != 0 && read_struct_id != 1){
         printk(KERN_INFO "lab_driver: wrong struct id");
         return -1;
     }

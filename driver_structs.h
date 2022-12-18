@@ -6,8 +6,6 @@
 #ifndef OPERATION_SYSTEM_LAB_2_LAB_STRUCTS_H
 
 #define SUCCESS 0
-#define STRUCT_PCI_DEV 0
-#define STRUCT_INODE 1
 #define PROCFS_MAX_SIZE 1024
 #define PROCFS_NAME "lab_driver"
 
