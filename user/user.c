@@ -39,17 +39,28 @@ int main(int argc, char *argv[]) {
         perror("open");
         return -1;
     }
-    char buf[100];
-    int num_of_args = sprintf(buf, "%d", pid);
-    if (num_of_args < 0) {
-        perror("sprintf");
-        return -1;
-    }
-    if (write(fd, buf, num_of_args) < 0) {
+    struct answer answer = (struct answer) {
+            .pid = pid,
+            .inode = (struct user_inode) {
+                    .i_ino = 0,
+                    .i_mode = 0,
+                    .i_flags = 0,
+                    .i_size = 0,
+                    .i_blocks = 0,
+                    .i_uid = 0,
+                    .i_gid = 0
+            },
+            .pci_dev = (struct user_pci_dev) {
+                    .vendor = 0,
+                    .device = 0,
+                    .subsystem_vendor = 0,
+                    .subsystem_device = 0
+            }
+    };
+    if (write(fd, &answer, sizeof (struct answer)) < 0) {
         perror("write");
         return -1;
     }
-    struct answer answer;
     if (read(fd, &answer, sizeof(struct answer)) < 0) {
         perror("read");
         return -1;
