@@ -28,6 +28,14 @@ static void __exit lab_driver_exit(void);
 static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count, loff_t *ppos);
 static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos);
 
+enum {
+    DEVICE_NOT_USED = 0,
+    DEVICE_OPEN = 1,
+};
+
+static atomic_t already_open = ATOMIC_INIT(DEVICE_NOT_USED);
+
+
 static const struct proc_ops proc_ops = {
     .proc_read = lab_driver_read,
     .proc_write = lab_driver_write
@@ -36,7 +44,9 @@ static const struct proc_ops proc_ops = {
 
 static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
-    struct task_struct *task = get_pid_task(find_vpid(answer.pid), PIDTYPE_PID);
+    struct task_struct *task;
+    atomic_set(&already_open, DEVICE_NOT_USED);
+    task = get_pid_task(find_vpid(answer.pid), PIDTYPE_PID);
     if(task == NULL){
         printk(KERN_INFO "lab_driver: task is null");
         answer = (struct answer){
@@ -80,6 +90,9 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
 
 static ssize_t lab_driver_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
+    if (atomic_cmpxchg(&already_open, DEVICE_NOT_USED, DEVICE_OPEN)) {
+        return -EBUSY;
+    }
 
     if(*ppos > 0 || count > PROCFS_MAX_SIZE){
         printk(KERN_INFO "lab_driver: write failed");

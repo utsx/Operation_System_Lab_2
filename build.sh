@@ -6,3 +6,4 @@ make
 sudo insmod driver.ko
 cd ../user
 make
+sudo dmesg
