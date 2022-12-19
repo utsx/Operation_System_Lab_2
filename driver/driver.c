@@ -92,7 +92,9 @@ static ssize_t lab_driver_read(struct file *file, char __user *buf, size_t count
                             .i_mode = inode->i_mode,
                             .i_flags = inode->i_flags,
                             .i_size = inode->i_size,
-                            .i_blocks = inode->i_blocks}
+                            .i_blocks = inode->i_blocks,
+                            .i_uid = inode->i_uid.val,
+                            .i_gid = inode->i_gid.val}
                 };
         }
     }

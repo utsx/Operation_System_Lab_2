@@ -22,6 +22,8 @@ struct user_inode{
     unsigned int i_flags;
     loff_t i_size;
     blkcnt_t i_blocks;
+    uid_t i_uid;
+    uid_t i_gid;
 };
 
 

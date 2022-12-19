@@ -56,9 +56,9 @@ int main(int argc, char *argv[]) {
     }
     if (answer.pid != -1) {
         printf("PCI_DEV and INODE for: %d\nPCI_DEV\nvendor: %d\ndevice: %d\nsubsystem_vendor: %d\nsubsystem_device: %d\nINODE"
-               "\ni_ino: %lu\ni_mode: %d\ni_flags: %d\ni_size: %ld\ni_blocks: %ld\n",
+               "\ni_ino: %lu\ni_mode: %d\ni_flags: %d\ni_size: %ld\ni_blocks: %ld\ni_uid: %d\ni_gid: %d\n",
                answer.pid, answer.pci_dev.vendor, answer.pci_dev.device, answer.pci_dev.subsystem_vendor, answer.pci_dev.subsystem_device,
-               answer.inode.i_ino, answer.inode.i_mode, answer.inode.i_flags, answer.inode.i_size, answer.inode.i_blocks);
+               answer.inode.i_ino, answer.inode.i_mode, answer.inode.i_flags, answer.inode.i_size, answer.inode.i_blocks, answer.inode.i_uid, answer.inode.i_gid);
     } else {
         fprintf(stderr, "Can't find structs\n");
         return -1;
